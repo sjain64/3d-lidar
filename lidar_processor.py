@@ -35,6 +35,8 @@ import os
 class LidarProcessor:
     """QGIS Plugin Implementation."""
 
+    # Author : Vivek Jadon and Sumeet Jain
+    # This function is used to call corresponding functions on button click event
     def __init__(self, iface):
         """Constructor.
 
@@ -67,7 +69,7 @@ class LidarProcessor:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&LiDAR Processor')
-        # TODO: We are going to let the user set this up in a future iteration
+
         self.toolbar = self.iface.addToolBar(u'LidarProcessor')
         self.toolbar.setObjectName(u'LidarProcessor')
 
@@ -203,17 +205,21 @@ class LidarProcessor:
 
 
 
+
+    # Author : Vivek Jadon
     # Enable users to select the input Directory---
     def select_input_file(self):
         dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Input Directory","")
         self.dlg.inputDir.setText(dirname)
         self.listalllasfiles()
 
+    # Author : Vivek Jadon
     # Enable users to select the input Directory---
     def select_output_file(self):
         dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Output Directory","")
         self.dlg.outputDir.setText(dirname)
 
+    # Author : Sumeet Jain
     #list all files in the listoffiles combobox
     def listalllasfiles(self):
         nameofdir = self.dlg.inputDir.text()
@@ -224,7 +230,7 @@ class LidarProcessor:
                 filearr.append(file)
         self.dlg.listoffiles.addItems(filearr)
 
-
+    # Author : Sumeet Jain
     # This func is called when Start Processing Button is pressed. It is used to perform the selected lidar operations
     def proc_start(self):
 
@@ -240,7 +246,7 @@ class LidarProcessor:
             self.loadlayer()
 
 
-
+    # Author : Vivek Jadon
     # This is prefromed if COMPRESS checkbox is checked. It is reponsible for Compression of Lidar Files
     def lascompress(self):
         count = 0
@@ -264,7 +270,8 @@ class LidarProcessor:
         output2 = "Compression process complete for " + str(count) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-
+    # Author : Sumeet Jain
+    # This function updates status after completion of Compression process
     def displayoutput(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -273,6 +280,8 @@ class LidarProcessor:
             compratio = self.compressratio(nameofinputdir, nameofoutputdir, i)
             self.dlg.statusBox.appendPlainText('Compressed ' + i + ' with Compression Ratio = ' +  str(compratio))
 
+    # Author : Vivek Jadon
+    # This function prepares compression commands
     def readfileforzip(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -282,6 +291,8 @@ class LidarProcessor:
             filecmd.append('./laszip.exe -i' + ' "' + nameofinputdir + "/" + i + '" -odir "' + nameofoutputdir + '" -olaz')
         return filecmd
 
+    # Author : Sumeet Jain
+    # This function returns the compression ratio for each file compressed
     def compressratio(self, ipdir, opdir, ipfilename):
         fnamewoext = ipfilename
         fnamewoext = fnamewoext[:-1]
@@ -289,8 +300,7 @@ class LidarProcessor:
         return "{:.2f}".format(ratio)
 
 
-
-
+    # Author : Sumeet Jain
     # This is prefromed if VIEW checkbox is checked. It is reponsible for Visualization of  Lidar  Files
     def lasview(self):
         count = 0
@@ -312,7 +322,8 @@ class LidarProcessor:
         output2 = "Visualization process complete for " + str(count) + " files \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-
+    # Author : Vivek Jadon
+    # This function prepares commands for visualization of LAS files
     def readfileforview(self):
         nameofdir = self.dlg.inputDir.text()
         filecmd = []
@@ -324,31 +335,20 @@ class LidarProcessor:
             j = j+1
         return filecmd
 
-
-    # This is prefromed if LAS2DEM checkbox is checked. It is reponsible for Conversion of  Lidar  Files to DEM files
+    # Author : Vivek Jadon
+    # It is reponsible for Conversion of  Lidar  Files to DEM files
     def las2dem(self):
         count = 0
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
         self.dlg.statusBox.appendPlainText("DEM GENERATION")
         if self.dlg.selectedFile.isChecked():
-            nrows = self.dlg.nrows.text()
-            ncols = self.dlg.ncols.text()
             fname = str(self.dlg.listoffiles.currentText())
-
-            if nrows == "" and ncols == "":
-                cmdasc = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -oasc'
-                output1 = subprocess.check_output(cmdasc, shell=True)
-                cmdtif = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -otif'
-                output2 = subprocess.check_output(cmdtif, shell=True)
-                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + fname + '...')
-
-            else:
-                cmdasc = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -oasc'
-                output1 = subprocess.check_output(cmdasc, shell=True)
-                cmdtif = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -otif'
-                output2 = subprocess.check_output(cmdtif, shell=True)
-                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + fname + ' with Dimensions \nRows: ' + str(nrows) + ' Cols: ' + str(ncols))
+            cmdasc = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -oasc'
+            output1 = subprocess.check_output(cmdasc, shell=True)
+            cmdtif = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -otif'
+            output2 = subprocess.check_output(cmdtif, shell=True)
+            self.dlg.statusBox.appendPlainText('Generated DEM file for ' + fname + '...')
             count = 2
 
         else:
@@ -361,7 +361,8 @@ class LidarProcessor:
         output2 = "DEM file generation process complete for " + str(count/2) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-
+    # Author : Sumeet Jain
+    # This function prepares commands for LAS to DEM conversion
     def readfilefordem(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -381,12 +382,12 @@ class LidarProcessor:
             for i in nameoffile:
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -oasc')
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -otif')
-                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + i + ' with Dimensions \nRows: ' + str(nrows) + ' Cols: ' + str(ncols))
+                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + i + ' with Dimensions \n No of Rows: ' + str(nrows) + ' No of cols: ' + str(ncols))
                 j = j+1
         return filecmd
 
-
-
+    # Author : Vivek Jadon
+    # This function prepares commands to convert TIFF files to SHP files.
     def tif2shp(self):
         count = 0
         nameofinputdir = self.dlg.inputDir.text()
@@ -409,6 +410,8 @@ class LidarProcessor:
         output2 = "SHP file generation process complete for " + str(count) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
+    # Author : Sumeet Jain
+    # This function is used for conversion of conversion of multiple TIFF files to SHP files
     def readfileforshp(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -424,15 +427,15 @@ class LidarProcessor:
             fnamewoext = fnamewoext[:-4]
             temp.append(fnamewoext)
 
-        #nameoffile = [self.dlg.listoffiles.itemText(i) for i in  range (self.dlg.listoffiles.count())]
         filecmd = []
 
         for i in temp:
             filecmd.append(('gdaltindex ' + nameofoutputdir + "/" + i + '.shp ' + nameofoutputdir + "/" + i + '.tif'))
-            self.dlg.statusBox.appendPlainText('Generated SHP file for ' + i + '  ...')
+            self.dlg.statusBox.appendPlainText('Generated DEM file for ' + i + '  ...')
         return filecmd
 
-
+    # Author : Sumeet Jain and Vivek Jadon
+    # This function is used to load SHP and ASC files in Layers panel of QGIS
     def loadlayer(self):
         nameofoutputdir = self.dlg.outputDir.text()
         self.dlg.statusBox.appendPlainText('Loading asc files..')
@@ -462,7 +465,6 @@ class LidarProcessor:
         if not layer:
             output =  "Layer failed to load!"
             self.dlg.statusBox.appendPlainText(output)
-
 
 
 
