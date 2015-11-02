@@ -26,17 +26,19 @@ from PyQt4.QtGui import QAction, QIcon
 import resources
 # Import the code for the dialog
 from lidar_processor_dialog import LidarProcessorDialog
+from qgis.gui import QgsMessageBar
+from qgis.core import QgsMessageLog
 import os.path
 from PyQt4.QtGui import QFileDialog
 import subprocess
 import os
+import os.path
+
 
 
 class LidarProcessor:
     """QGIS Plugin Implementation."""
 
-    # Author : Vivek Jadon and Sumeet Jain
-    # This function is used to call corresponding functions on button click event
     def __init__(self, iface):
         """Constructor.
 
@@ -69,9 +71,11 @@ class LidarProcessor:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&LiDAR Processor')
-
+        # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'LidarProcessor')
         self.toolbar.setObjectName(u'LidarProcessor')
+
+
 
         # Button Calls
 
@@ -89,8 +93,23 @@ class LidarProcessor:
         # To make the Status box uneditable by the user
         self.dlg.statusBox.setReadOnly(True)
 
+        # Set Resolution Button for DEM FIles
+        self.dlg.setres.clicked.connect(self.enablespin)
+        count =0
 
 
+
+
+
+    def enablespin(self):
+        if self.dlg.setres.text() == "Enable Resolution":
+            self.dlg.ncols.setEnabled(True)
+            self.dlg.nrows.setEnabled(True)
+            self.dlg.setres.setText("Disable Resolution")
+        else:
+            self.dlg.ncols.setEnabled(False)
+            self.dlg.nrows.setEnabled(False)
+            self.dlg.setres.setText("Enable Resolution")
 
 
     # noinspection PyMethodMayBeStatic
@@ -205,21 +224,17 @@ class LidarProcessor:
 
 
 
-
-    # Author : Vivek Jadon
     # Enable users to select the input Directory---
     def select_input_file(self):
         dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Input Directory","")
         self.dlg.inputDir.setText(dirname)
         self.listalllasfiles()
 
-    # Author : Vivek Jadon
     # Enable users to select the input Directory---
     def select_output_file(self):
         dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Output Directory","")
         self.dlg.outputDir.setText(dirname)
 
-    # Author : Sumeet Jain
     #list all files in the listoffiles combobox
     def listalllasfiles(self):
         nameofdir = self.dlg.inputDir.text()
@@ -230,23 +245,30 @@ class LidarProcessor:
                 filearr.append(file)
         self.dlg.listoffiles.addItems(filearr)
 
-    # Author : Sumeet Jain
+
     # This func is called when Start Processing Button is pressed. It is used to perform the selected lidar operations
     def proc_start(self):
 
-        if self.dlg.compress.isChecked():
-            self.lascompress()
-        if self.dlg.visualize.isChecked():
-            self.lasview()
-        if self.dlg.demGen.isChecked():
-            self.las2dem()
-        if self.dlg.shpGen.isChecked():
-            self.tif2shp()
-        if self.dlg.loadLayer.isChecked():
-            self.loadlayer()
+        if self.dlg.inputDir.text() == "":
+            self.iface.messageBar().pushMessage("Error", "Please select a Input Directory Biaaatch! ", level=QgsMessageBar.CRITICAL)
+
+        elif self.dlg.inputDir.text() == "":
+            self.iface.messageBar().pushMessage("Error", "Please select a Output Directory Biaaatch! ", level=QgsMessageBar.CRITICAL)
+
+        else:
+            if self.dlg.compress.isChecked():
+                self.lascompress()
+            if self.dlg.visualize.isChecked():
+                self.lasview()
+            if self.dlg.demGen.isChecked():
+                self.las2dem()
+            if self.dlg.shpGen.isChecked():
+                self.tif2shp()
+            if self.dlg.loadLayer.isChecked():
+                self.loadlayer()
 
 
-    # Author : Vivek Jadon
+
     # This is prefromed if COMPRESS checkbox is checked. It is reponsible for Compression of Lidar Files
     def lascompress(self):
         count = 0
@@ -270,8 +292,7 @@ class LidarProcessor:
         output2 = "Compression process complete for " + str(count) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-    # Author : Sumeet Jain
-    # This function updates status after completion of Compression process
+
     def displayoutput(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -280,8 +301,6 @@ class LidarProcessor:
             compratio = self.compressratio(nameofinputdir, nameofoutputdir, i)
             self.dlg.statusBox.appendPlainText('Compressed ' + i + ' with Compression Ratio = ' +  str(compratio))
 
-    # Author : Vivek Jadon
-    # This function prepares compression commands
     def readfileforzip(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -291,8 +310,6 @@ class LidarProcessor:
             filecmd.append('./laszip.exe -i' + ' "' + nameofinputdir + "/" + i + '" -odir "' + nameofoutputdir + '" -olaz')
         return filecmd
 
-    # Author : Sumeet Jain
-    # This function returns the compression ratio for each file compressed
     def compressratio(self, ipdir, opdir, ipfilename):
         fnamewoext = ipfilename
         fnamewoext = fnamewoext[:-1]
@@ -300,7 +317,8 @@ class LidarProcessor:
         return "{:.2f}".format(ratio)
 
 
-    # Author : Sumeet Jain
+
+
     # This is prefromed if VIEW checkbox is checked. It is reponsible for Visualization of  Lidar  Files
     def lasview(self):
         count = 0
@@ -322,8 +340,7 @@ class LidarProcessor:
         output2 = "Visualization process complete for " + str(count) + " files \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-    # Author : Vivek Jadon
-    # This function prepares commands for visualization of LAS files
+
     def readfileforview(self):
         nameofdir = self.dlg.inputDir.text()
         filecmd = []
@@ -335,8 +352,8 @@ class LidarProcessor:
             j = j+1
         return filecmd
 
-    # Author : Vivek Jadon
-    # It is reponsible for Conversion of  Lidar  Files to DEM files
+
+    # This is prefromed if LAS2DEM checkbox is checked. It is reponsible for Conversion of  Lidar  Files to DEM files
     def las2dem(self):
         count = 0
         nameofinputdir = self.dlg.inputDir.text()
@@ -344,11 +361,22 @@ class LidarProcessor:
         self.dlg.statusBox.appendPlainText("DEM GENERATION")
         if self.dlg.selectedFile.isChecked():
             fname = str(self.dlg.listoffiles.currentText())
-            cmdasc = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -oasc'
-            output1 = subprocess.check_output(cmdasc, shell=True)
-            cmdtif = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -otif'
-            output2 = subprocess.check_output(cmdtif, shell=True)
-            self.dlg.statusBox.appendPlainText('Generated DEM file for ' + fname + '...')
+
+            if self.dlg.setres.text() == "Enable Resolution":
+                cmdasc = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -oasc'
+                output1 = subprocess.check_output(cmdasc, shell=True)
+                cmdtif = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -otif'
+                output2 = subprocess.check_output(cmdtif, shell=True)
+                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + fname + '...')
+
+            else:
+                nrows = self.dlg.nrows.text()
+                ncols = self.dlg.ncols.text()
+                cmdasc = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -oasc'
+                output1 = subprocess.check_output(cmdasc, shell=True)
+                cmdtif = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -otif'
+                output2 = subprocess.check_output(cmdtif, shell=True)
+                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + fname + ' with Dimensions \nRows: ' + str(nrows) + ' Cols: ' + str(ncols))
             count = 2
 
         else:
@@ -361,33 +389,32 @@ class LidarProcessor:
         output2 = "DEM file generation process complete for " + str(count/2) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-    # Author : Sumeet Jain
-    # This function prepares commands for LAS to DEM conversion
+
     def readfilefordem(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
         filecmd = []
         nameoffile = [self.dlg.listoffiles.itemText(i) for i in  range (self.dlg.listoffiles.count())]
 
-        nrows = self.dlg.nrows.text()
-        ncols = self.dlg.ncols.text()
 
-        if nrows == "" and ncols == "":
+        if self.dlg.setres.text() == "Enable Resolution":
             for i in nameoffile:
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -odir "' + nameofoutputdir + '" -oasc')
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -odir "' + nameofoutputdir + '" -otif')
                 self.dlg.statusBox.appendPlainText('Generated DEM file for ' + i)
         else:
             j =0
+            nrows = self.dlg.nrows.text()
+            ncols = self.dlg.ncols.text()
             for i in nameoffile:
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -oasc')
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -ncols ' + str(ncols) + ' -nrows ' +  str(nrows) + ' -odir "' + nameofoutputdir + '" -otif')
-                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + i + ' with Dimensions \n No of Rows: ' + str(nrows) + ' No of cols: ' + str(ncols))
+                self.dlg.statusBox.appendPlainText('Generated DEM file for ' + i + ' with Dimensions \nRows: ' + str(nrows) + ' Cols: ' + str(ncols))
                 j = j+1
         return filecmd
 
-    # Author : Vivek Jadon
-    # This function prepares commands to convert TIFF files to SHP files.
+
+
     def tif2shp(self):
         count = 0
         nameofinputdir = self.dlg.inputDir.text()
@@ -410,8 +437,6 @@ class LidarProcessor:
         output2 = "SHP file generation process complete for " + str(count) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-    # Author : Sumeet Jain
-    # This function is used for conversion of conversion of multiple TIFF files to SHP files
     def readfileforshp(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -427,15 +452,15 @@ class LidarProcessor:
             fnamewoext = fnamewoext[:-4]
             temp.append(fnamewoext)
 
+        #nameoffile = [self.dlg.listoffiles.itemText(i) for i in  range (self.dlg.listoffiles.count())]
         filecmd = []
 
         for i in temp:
             filecmd.append(('gdaltindex ' + nameofoutputdir + "/" + i + '.shp ' + nameofoutputdir + "/" + i + '.tif'))
-            self.dlg.statusBox.appendPlainText('Generated DEM file for ' + i + '  ...')
+            self.dlg.statusBox.appendPlainText('Generated SHP file for ' + i + '  ...')
         return filecmd
 
-    # Author : Sumeet Jain and Vivek Jadon
-    # This function is used to load SHP and ASC files in Layers panel of QGIS
+
     def loadlayer(self):
         nameofoutputdir = self.dlg.outputDir.text()
         self.dlg.statusBox.appendPlainText('Loading asc files..')
@@ -474,6 +499,7 @@ class LidarProcessor:
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
+
         # See if OK was pressed
         if result:
             # Do something useful here - delete the line containing pass and
