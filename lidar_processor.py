@@ -39,6 +39,9 @@ import os.path
 class LidarProcessor:
     """QGIS Plugin Implementation."""
 
+     # Author : Vivek Jadon and Sumeet Jain
+     # This function is used to call corresponding functions on button click event
+
     def __init__(self, iface):
         """Constructor.
 
@@ -102,14 +105,14 @@ class LidarProcessor:
 
 
     def enablespin(self):
-        if self.dlg.setres.text() == "Enable Resolution":
+        if self.dlg.setres.text() == "Customize Resolution":
             self.dlg.ncols.setEnabled(True)
             self.dlg.nrows.setEnabled(True)
-            self.dlg.setres.setText("Disable Resolution")
+            self.dlg.setres.setText("Use Default")
         else:
             self.dlg.ncols.setEnabled(False)
             self.dlg.nrows.setEnabled(False)
-            self.dlg.setres.setText("Enable Resolution")
+            self.dlg.setres.setText("Customize Resolution")
 
 
     # noinspection PyMethodMayBeStatic
@@ -223,19 +226,21 @@ class LidarProcessor:
         del self.toolbar
 
 
-
-    # Enable users to select the input Directory---
+     # Author : Vivek Jadon
+     # Enable users to select the input Directory---
     def select_input_file(self):
         dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Input Directory","")
         self.dlg.inputDir.setText(dirname)
         self.listalllasfiles()
 
+    # Author : Vivek Jadon
     # Enable users to select the input Directory---
     def select_output_file(self):
         dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Output Directory","")
         self.dlg.outputDir.setText(dirname)
 
-    #list all files in the listoffiles combobox
+    # Author : Sumeet Jain
+    # List all files in the listoffiles combobox
     def listalllasfiles(self):
         nameofdir = self.dlg.inputDir.text()
         filearr = []
@@ -245,15 +250,15 @@ class LidarProcessor:
                 filearr.append(file)
         self.dlg.listoffiles.addItems(filearr)
 
-
+    # Author : Sumeet Jain
     # This func is called when Start Processing Button is pressed. It is used to perform the selected lidar operations
     def proc_start(self):
 
         if self.dlg.inputDir.text() == "":
-            self.iface.messageBar().pushMessage("Error", "Please select a Input Directory Biaaatch! ", level=QgsMessageBar.CRITICAL)
+            self.iface.messageBar().pushMessage("Error", "Please select a Input Directory ", level=QgsMessageBar.CRITICAL)
 
         elif self.dlg.inputDir.text() == "":
-            self.iface.messageBar().pushMessage("Error", "Please select a Output Directory Biaaatch! ", level=QgsMessageBar.CRITICAL)
+            self.iface.messageBar().pushMessage("Error", "Please select a Output Directory ", level=QgsMessageBar.CRITICAL)
 
         else:
             if self.dlg.compress.isChecked():
@@ -268,8 +273,8 @@ class LidarProcessor:
                 self.loadlayer()
 
 
-
-    # This is prefromed if COMPRESS checkbox is checked. It is reponsible for Compression of Lidar Files
+    # Author : Vivek Jadon
+    # This is performed if COMPRESS checkbox is checked. It is reponsible for Compression of Lidar Files
     def lascompress(self):
         count = 0
         self.dlg.statusBox.appendPlainText("COMPRESSION")
@@ -292,7 +297,8 @@ class LidarProcessor:
         output2 = "Compression process complete for " + str(count) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-
+    # Author : Sumeet Jain
+    # This function updates status after completion of Compression process
     def displayoutput(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -301,6 +307,8 @@ class LidarProcessor:
             compratio = self.compressratio(nameofinputdir, nameofoutputdir, i)
             self.dlg.statusBox.appendPlainText('Compressed ' + i + ' with Compression Ratio = ' +  str(compratio))
 
+    # Author : Vivek Jadon
+    # This function prepares compression commands
     def readfileforzip(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -310,15 +318,15 @@ class LidarProcessor:
             filecmd.append('./laszip.exe -i' + ' "' + nameofinputdir + "/" + i + '" -odir "' + nameofoutputdir + '" -olaz')
         return filecmd
 
+    # Author : Sumeet Jain
+    # This function returns the compression ratio for each file compressed
     def compressratio(self, ipdir, opdir, ipfilename):
         fnamewoext = ipfilename
         fnamewoext = fnamewoext[:-1]
         ratio = (float(os.path.getsize(ipdir + '/' + ipfilename))/(float(os.path.getsize(opdir + '/' + fnamewoext + 'z'))))
         return "{:.2f}".format(ratio)
 
-
-
-
+    # Author : Sumeet Jain
     # This is prefromed if VIEW checkbox is checked. It is reponsible for Visualization of  Lidar  Files
     def lasview(self):
         count = 0
@@ -340,7 +348,8 @@ class LidarProcessor:
         output2 = "Visualization process complete for " + str(count) + " files \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-
+    # Author : Vivek Jadon
+    # This function prepares commands for visualization of LAS files
     def readfileforview(self):
         nameofdir = self.dlg.inputDir.text()
         filecmd = []
@@ -352,7 +361,7 @@ class LidarProcessor:
             j = j+1
         return filecmd
 
-
+    # Author : Vivek Jadon
     # This is prefromed if LAS2DEM checkbox is checked. It is reponsible for Conversion of  Lidar  Files to DEM files
     def las2dem(self):
         count = 0
@@ -362,7 +371,7 @@ class LidarProcessor:
         if self.dlg.selectedFile.isChecked():
             fname = str(self.dlg.listoffiles.currentText())
 
-            if self.dlg.setres.text() == "Enable Resolution":
+            if self.dlg.setres.text() == "Customize Resolution":
                 cmdasc = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -oasc'
                 output1 = subprocess.check_output(cmdasc, shell=True)
                 cmdtif = './las2dem.exe -i' + ' "' + nameofinputdir + "/" + fname + '" -elevation -odir "' + nameofoutputdir + '" -otif'
@@ -389,7 +398,8 @@ class LidarProcessor:
         output2 = "DEM file generation process complete for " + str(count/2) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-
+    # Author : Sumeet Jain
+    # This function prepares commands for LAS to DEM conversion
     def readfilefordem(self):
         nameofinputdir = self.dlg.inputDir.text()
         nameofoutputdir = self.dlg.outputDir.text()
@@ -397,7 +407,7 @@ class LidarProcessor:
         nameoffile = [self.dlg.listoffiles.itemText(i) for i in  range (self.dlg.listoffiles.count())]
 
 
-        if self.dlg.setres.text() == "Enable Resolution":
+        if self.dlg.setres.text() == "Customize Resolution":
             for i in nameoffile:
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -odir "' + nameofoutputdir + '" -oasc')
                 filecmd.append('./las2dem.exe -i' + ' "' + nameofinputdir + "/" + i + '" -elevation -odir "' + nameofoutputdir + '" -otif')
@@ -414,7 +424,8 @@ class LidarProcessor:
         return filecmd
 
 
-
+     # Author : Vivek Jadon
+    # This function prepares commands to convert TIFF files to SHP files.
     def tif2shp(self):
         count = 0
         nameofinputdir = self.dlg.inputDir.text()
@@ -424,60 +435,36 @@ class LidarProcessor:
             fname = str(self.dlg.listoffiles.currentText())
             fnamewoext = fname
             fnamewoext = fnamewoext[:-4]
-            output1 = subprocess.check_output(('gdaltindex ' + nameofoutputdir + "/" + fnamewoext + '.shp ' + nameofinputdir + "/" + fnamewoext + '.tif'), shell=True)
+            output1 = subprocess.check_output(('gdaltindex ' + nameofoutputdir + "/" + fnamewoext + '.shp ' + nameofoutputdir + "/" + fnamewoext + '.tif'), shell=True)
             self.dlg.statusBox.appendPlainText('Generated SHP file for ' + fname + '...')
             count = 1
         else:
-            name = []
-            name = self.readfileforshp()
-            for k in name:
-                output1 = subprocess.check_output(k, shell=True)
+            # name = []
+            # name = self.readfileforshp()
+            # for k in name:
+            #     output1 = subprocess.check_output(k, shell=True)
+            #     count = count + 1
+            output1 = subprocess.check_output(('gdaltindex ' + nameofoutputdir + "/" + 'MergedFile.shp ' + nameofoutputdir + "/" + '*.tif'), shell=True)
+
+            filearr = []
+            for file in os.listdir(nameofoutputdir):
+                if file.endswith(".tif"):
+                    filearr.append(file)
+            self.dlg.statusBox.appendPlainText('Generated Single SHP file named "MergedFile" for' )
+            for i in filearr:
+                self.dlg.statusBox.appendPlainText(i)
                 count = count + 1
 
         output2 = "SHP file generation process complete for " + str(count) + " files. \n"
         self.dlg.statusBox.appendPlainText(output2)
 
-    def readfileforshp(self):
-        nameofinputdir = self.dlg.inputDir.text()
-        nameofoutputdir = self.dlg.outputDir.text()
-        filearr = []
-
-        for file in os.listdir(nameofoutputdir):
-            if file.endswith(".tif"):
-                filearr.append(file)
-
-        temp = []
-        for m in range(filearr.__len__()):
-            fnamewoext = filearr[m]
-            fnamewoext = fnamewoext[:-4]
-            temp.append(fnamewoext)
-
-        #nameoffile = [self.dlg.listoffiles.itemText(i) for i in  range (self.dlg.listoffiles.count())]
-        filecmd = []
-
-        for i in temp:
-            filecmd.append(('gdaltindex ' + nameofoutputdir + "/" + i + '.shp ' + nameofoutputdir + "/" + i + '.tif'))
-            self.dlg.statusBox.appendPlainText('Generated SHP file for ' + i + '  ...')
-        return filecmd
 
 
+    # Author :  Sumeet Jain
+    # This function is used to load SHP and ASC files in Layers panel of QGIS
     def loadlayer(self):
         nameofoutputdir = self.dlg.outputDir.text()
-        self.dlg.statusBox.appendPlainText('Loading asc files..')
-        filearrasc = []
-        for file in os.listdir(nameofoutputdir):
-            if file.endswith(".asc"):
-                filearrasc.append(file)
-
-        for i in filearrasc:
-            layer = self.iface.addRasterLayer(nameofoutputdir + "/" +i , i)
-            self.dlg.statusBox.appendPlainText(i + ' file loaded')
-        if not layer:
-            output =  "Layer failed to load!"
-            self.dlg.statusBox.appendPlainText(output)
-
-
-        self.dlg.statusBox.appendPlainText('\nLoading shp files..')
+        self.dlg.statusBox.appendPlainText('\nLoading shp file..')
         filearrshp = []
         for file in os.listdir(nameofoutputdir):
             if file.endswith(".shp"):
