@@ -36,6 +36,7 @@ import os
 import os.path
 import qgis
 from qgis import *
+import ctypes
 
 
 
@@ -243,6 +244,17 @@ class LidarProcessor:
     def select_input_file(self):
         dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Input Directory","")
         self.dlg.inputDir.setText(dirname)
+        count = 0
+        while (count ==0):
+            for file in os.listdir(dirname):
+                if file.endswith(".las"):
+                    count +=1
+                    self.dlg.inputDir.setText(dirname)
+            if count == 0:
+                ctypes.windll.user32.MessageBoxA(0, "There is no las file in the selected input directory. \nPlease select another input directory", "Error!", 0)
+                dirname = QFileDialog.getExistingDirectory(self.dlg, "Select Input Directory","")
+
+
         self.listalllasfiles()
 
     # Author : Vivek Jadon
@@ -272,7 +284,7 @@ class LidarProcessor:
     # Author : Sumeet Jain
     # This func is called when Start Processing Button is pressed. It is used to perform the selected lidar operations
     def proc_start(self):
-
+        dirname = self.dlg.lastoolDir.text()
         if self.dlg.inputDir.text() == "":
             self.iface.messageBar().pushMessage("Error", "Please select a Input Directory ", level=QgsMessageBar.CRITICAL)
 
@@ -284,11 +296,26 @@ class LidarProcessor:
 
         else:
             if self.dlg.compress.isChecked():
-                self.lascompress()
+                os.chdir(dirname)
+                if not(os.path.isfile("laszip.exe")):
+                    ctypes.windll.user32.MessageBoxA(0, "No laszip.exe in the selected lastools directory \nPlease select a valid directory. \nHint: Select the folder path till /bin", "Error!", 0)
+                else:
+                    self.lascompress()
+
             if self.dlg.visualize.isChecked():
-                self.lasview()
+                os.chdir(dirname)
+                if not(os.path.isfile("lasview.exe")):
+                    ctypes.windll.user32.MessageBoxA(0, "No lasview.exe in the selected lastools directory \nPlease select a valid directory. \nHint: Select the folder path till /bin", "Error!", 0)
+                else:
+                    self.lasview()
+
             if self.dlg.demGen.isChecked():
-                self.las2dem()
+                os.chdir(dirname)
+                if not(os.path.isfile("las2dem.exe")):
+                    ctypes.windll.user32.MessageBoxA(0, "No las2dem.exe in the selected lastools directory \nPlease select a valid directory. \nHint: Select the folder path till /bin", "Error!", 0)
+                else:
+                    self.las2dem()
+
             if self.dlg.shpGen.isChecked():
                 self.tif2shp()
             if self.dlg.loadLayer.isChecked():

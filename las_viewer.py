@@ -26,8 +26,11 @@ from PyQt4.QtGui import QAction, QIcon
 import resources
 # Import the code for the dialog
 from las_viewer_dialog import LasViewerDialog
+from PyQt4.QtGui import QFileDialog
 import os.path
 import subprocess
+import qgis
+import ctypes
 
 
 class LasViewer():
@@ -68,6 +71,40 @@ class LasViewer():
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'LasViewer')
         self.toolbar.setObjectName(u'LasViewer')
+
+        # Author : Sumeet Jain
+        # Button to ask user to select the directory in which lasview is stored
+        self.dlg.lasviewDir.clear()
+        self.dlg.lasviewDirButton.clicked.connect(self.select_lastool_file)
+
+        # Author : Sumeet Jain
+        # Button to start operation
+        self.dlg.OkButton.clicked.connect(self.ok_button)
+
+    # Author : Sumeet Jain
+    # Selecting the lasview directory
+    def select_lastool_file(self):
+        dirname = QFileDialog.getExistingDirectory(self.dlg, "Select the directory in which lasview.exe is stored","")
+        self.dlg.lasviewDir.setText(dirname)
+
+    # Author : Sumeet Jain
+    # Main Process of the button - Visualization of the file selected in the QGIS legend
+    def ok_button(self):
+        lasviewDir = self.dlg.lasviewDir.text()
+        layer = self.iface.activeLayer()
+        layerpath = layer.source()
+        name_las = layerpath
+        name_las =name_las[:-4]
+        name_las = ''.join((name_las, '.laz'))
+        os.chdir(lasviewDir)
+        output1 = subprocess.check_output('lasview.exe -i' + ' "' + name_las + '"', shell=True)
+        # self.dlg.statusBox.appendPlainText(str(layerpath))
+        self.dlg.close()
+        qgis.utils.reloadPlugin('LasViewer')
+
+
+
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -181,23 +218,14 @@ class LasViewer():
 
 
     def run(self):
-        # """Run method that performs all the real work"""
-        # # show the dialog
-        # self.dlg.show()
-        # # Run the dialog event loop
-        # result = self.dlg.exec_()
-        # # See if OK was pressed
-        # if result:
-        #     # Do something useful here - delete the line containing pass and
-        #     # substitute with your code.
-        #     pass
+        """Run method that performs all the real work"""
+        # show the dialog
+        self.dlg.show()
+        # Run the dialog event loop
+        result = self.dlg.exec_()
+        # See if OK was pressed
+        if result:
+            # Do something useful here - delete the line containing pass and
+            # substitute with your code.
+            pass
 
-	    #Author Name: Sumeet Jain
-
-        layer = self.iface.activeLayer()
-        layerpath = layer.source()
-        name_las = layerpath
-        name_las =name_las[:-4]
-        name_las = ''.join((name_las, '.laz'))
-        output1 = subprocess.check_output('./lasview.exe -i' + ' "' + name_las + '"', shell=True)
-        # self.dlg.statusBox.appendPlainText(str(layerpath))
